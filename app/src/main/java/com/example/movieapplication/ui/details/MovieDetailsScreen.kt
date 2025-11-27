@@ -2,6 +2,7 @@ package com.example.movieapp.ui.details
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,10 +16,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,12 +35,16 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -359,7 +366,7 @@ fun MovieDetailsScreen(
 
                         }
 
-                        Divider(thickness = .3.dp, color = Color.Gray)
+                        Divider(thickness = .3.dp, color =  Color(0xFF2D2D2D))
 
 // Crew summary
                         val ageRating = movieDetails?.ageRating ?: "NR"
@@ -394,7 +401,7 @@ fun MovieDetailsScreen(
 
                             // --- FULL WIDTH DIVIDER (NOT inside padding) ---
                             if (directors.isNotEmpty() && writers.isNotEmpty()) {
-                                Divider(thickness = .3.dp, color = Color.Gray)
+                                Divider(thickness = .3.dp, color =  Color(0xFF2D2D2D))
                             }
 
                             // --- WRITER ROW (inside padding) ---
@@ -421,7 +428,7 @@ fun MovieDetailsScreen(
                             }
 
                             // bottom divider full width
-                            Divider(thickness = .3.dp, color = Color.Gray)
+                            Divider(thickness = .3.dp, color =  Color(0xFF2D2D2D))
                         }
                         // Bottom row: Age Rating • Rate this • Rating box
                         Row(
@@ -455,15 +462,112 @@ fun MovieDetailsScreen(
                             }
 
                             // 🔹 Column 2 — Rate This Button
+                            var showRatingDialog by remember { mutableStateOf(false) }
+                            var userRating by remember { mutableStateOf(0) }
                             Button(
-                                onClick = { /* TODO: Handle rating */ },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFCEFC00)
-                                ),
+                                onClick = { showRatingDialog = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCEFC00)),
                                 shape = RoundedCornerShape(8.dp),
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
                             ) {
-                                Text(text = "Rate This", color = Color(0xFF080808))
+                                Text(text = "Rate This", color = Color(0xFF080808), fontSize = 18.sp)
+                            }
+
+                            if (showRatingDialog) {
+                                Dialog(onDismissRequest = { showRatingDialog = false }) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(Color.Black.copy(alpha = 0.7f)) // blurred look simulation
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(vertical = 40.dp)
+                                        ) {
+                                            // X button
+                                            Box(
+                                                modifier = Modifier
+                                                    .align(Alignment.End)
+                                                    .padding(end = 16.dp)
+                                                    .size(44.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color.Black.copy(alpha = 0.3f))
+                                                    .border(
+                                                        width = 1.dp,
+                                                        brush = Brush.linearGradient(
+                                                            colors = listOf(
+                                                                Color.White.copy(alpha = 0.3f),
+                                                                Color.White.copy(alpha = 0.1f)
+                                                            )
+                                                        ),
+                                                        shape = CircleShape
+                                                    )
+                                                    .drawBehind {
+                                                        // Liquid glass effect - gradient overlay
+                                                        drawCircle(
+                                                            brush = Brush.linearGradient(
+                                                                colors = listOf(
+                                                                    Color.White.copy(alpha = 0.15f),
+                                                                    Color.White.copy(alpha = 0.05f)
+                                                                )
+                                                            ),
+                                                            radius = size.minDimension / 2
+                                                        )
+                                                    }
+                                                    .clickable { showRatingDialog = false }, // clickable at the end
+                                                contentAlignment = Alignment.Center
+                                            )  {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = "Close",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.height(16.dp))
+
+                                            // Big poster
+                                            val posterUrl = movieDetails?.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                            Image(
+                                                painter = rememberAsyncImagePainter(posterUrl),
+                                                contentDescription = "Poster",
+                                                modifier = Modifier
+                                                    .size(200.dp, 300.dp)
+                                                    .clip(RoundedCornerShape(12.dp)),
+                                                contentScale = ContentScale.Crop
+                                            )
+
+                                            Spacer(modifier = Modifier.height(24.dp))
+
+                                            // Stars Row
+                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                (1..10).forEach { index ->
+                                                    Icon(
+                                                        imageVector = Icons.Default.Star,               // <-- Material icon
+                                                        contentDescription = "Star $index",
+                                                        tint = if (index <= userRating) Color(0xFF00D17B) else Color.Gray,
+                                                        modifier = Modifier
+                                                            .size(24.dp)                                // adjust size here
+                                                            .clickable { userRating = index }
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(16.dp))
+
+                                            // Optional: display rating text
+                                            Text(
+                                                text = "Your Rating: $userRating/10",
+                                                color = Color.White,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
                             }
 
                             // 🔹 Column 3 — Rating + Votes
@@ -474,18 +578,28 @@ fun MovieDetailsScreen(
                                     painter = painterResource(id = R.drawable.star_icon),
                                     contentDescription = "Rating Icon",
                                     modifier = Modifier
-                                        .size(20.dp)
+                                        .size(25.dp)
                                         .padding(bottom = 4.dp)
                                 )
 
                                 // ⭐ Rating text
                                 val displayRating = movieDetails?.voteAverage ?: voteAverageProp
+                                val voteColor =  Color.LightGray// your voting color
                                 displayRating?.let { r ->
                                     Text(
-                                        text = String.format("%.1f/10", r),
-                                        color = Color(0xFFFFD54F),
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.SemiBold
+                                        text = buildAnnotatedString {
+                                            withStyle(style = SpanStyle(
+                                                color = Color.White,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                            ) {
+                                                append(String.format("%.1f",displayRating)) // the rating number in white
+                                            }
+                                            withStyle(style = SpanStyle(color = voteColor, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)) {
+                                                append("/10") // the "/10" in voting color
+                                            }
+                                        },
+                                        fontSize = 14.sp
                                     )
                                 }
 
