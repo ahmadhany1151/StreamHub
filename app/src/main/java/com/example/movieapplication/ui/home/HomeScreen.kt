@@ -552,7 +552,7 @@ fun MovieItem(
                     brush = Brush.linearGradient(
                         colors = listOf(
                             Color.White.copy(alpha = 0.3f),
-                            Color.White.copy(alpha = 0.1f)
+                            Color.White.copy(alpha = 0.3f)
                         )
                     ),
                     shape = CircleShape

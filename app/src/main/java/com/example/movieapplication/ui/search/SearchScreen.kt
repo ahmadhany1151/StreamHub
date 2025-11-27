@@ -115,8 +115,6 @@ fun SearchScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-
-            
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -130,6 +128,9 @@ fun SearchScreen(
                         )
                     )
             ) {
+
+
+
                 Box(
                     modifier = Modifier
                         .clip(
@@ -157,6 +158,7 @@ fun SearchScreen(
                                 )
                             )
                     ) {
+                        //Search bar
                         OutlinedTextField(
                             value = query,
                             onValueChange = { searchViewModel.onQueryChanged(it) },
@@ -250,6 +252,11 @@ fun SearchScreen(
                             )
                         )
                 )
+
+
+
+
+
             }
 
             // Content based on search state
