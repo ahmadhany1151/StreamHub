@@ -406,7 +406,8 @@ fun AppNavigation(
         // ---------------- ACCOUNT SETTINGS ----------------
         composable("account_settings") {
             AccountSettingsScreen(
-                onLogout = onLogout // FIXED: Now calls the MainActivity's handleLogout() function
+                onLogout = onLogout ,// FIXED: Now calls the MainActivity's handleLogout() function
+                onBackClick = { navController.popBackStack() }
             )
         }
     }

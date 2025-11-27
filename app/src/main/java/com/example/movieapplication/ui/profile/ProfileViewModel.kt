@@ -23,10 +23,26 @@ class ProfileViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _username = MutableStateFlow("")
+    val username = _username.asStateFlow()
+
     init {
         loadUserProfile()
         observeFavoriteGenres()
         observeFavoriteCelebrities()
+        observeUsernameChanges()
+    }
+    fun observeUsernameChanges() {
+        val userId = auth.currentUser?.uid ?: return
+        db.collection("users").document(userId)
+            .addSnapshotListener { snapshot, error ->
+                if (snapshot != null && snapshot.exists()) {
+                    val username = snapshot.get("username") as? String
+                    if (!username.isNullOrEmpty()) {
+                        _profileState.value = _profileState.value.copy(username = username)
+                    }
+                }
+            }
     }
 
     fun loadUserProfile() {

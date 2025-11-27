@@ -13,13 +13,15 @@ data class MovieDetails(
     val voteAverage: Double?,
     @SerializedName("backdrop_path")
     val backdropPath: String?,
+    @SerializedName("vote_count") val voteCount: Int?,
     @SerializedName("release_date")
     val releaseDate: String?,
     val genres: List<Genre>?,
     val runtime: Int?,
     val cast: List<CastMember>?,
     val crew: List<CrewMember>?,
-    val videos: VideoResponse? = null
+    val videos: VideoResponse? = null,
+    var ageRating: String? = null
 
 ) : Serializable
 
@@ -64,4 +66,18 @@ data class VideoResult(
     val site: String,
     val type: String
 )
+data class ReleaseDatesResponse(
+    val id: Int,
+    val results: List<ReleaseDateResult>
+)
 
+data class ReleaseDateResult(
+    @SerializedName("iso_3166_1") val countryCode: String,
+    @SerializedName("release_dates") val releaseDates: List<ReleaseDateDetail>
+)
+
+data class ReleaseDateDetail(
+    val certification: String,
+    @SerializedName("release_date") val releaseDate: String,
+    val type: Int
+)

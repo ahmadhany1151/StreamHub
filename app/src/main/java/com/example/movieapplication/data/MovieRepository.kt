@@ -126,5 +126,28 @@ class MovieRepository {
             emptyList()
         }
     }
+    suspend fun getAgeRating(movieId: Int): String {
+        val data = apiService.getMovieAgeRating(movieId, BuildConfig.TMDB_API_KEY)
+
+        // Try to get US first, fallback to any country
+        val rating = data.results
+            .firstOrNull { it.countryCode == "US" }
+            ?.releaseDates
+            ?.firstOrNull { it.certification.isNotBlank() }
+            ?.certification
+            ?: data.results
+                .firstNotNullOfOrNull { country ->
+                    country.releaseDates.firstOrNull { it.certification.isNotBlank() }?.certification
+                }
+
+        return rating ?: "NR"
+    }
+    suspend fun getMovieDetailsWithAge(movieId: Int): MovieDetails {
+        val details = getMovieDetails(movieId) // existing method
+        val rating = getAgeRating(movieId)     // fetch age rating
+
+        details.ageRating = rating             // assign it
+        return details
+    }
 
 }

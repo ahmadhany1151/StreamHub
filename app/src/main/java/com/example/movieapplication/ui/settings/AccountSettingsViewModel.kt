@@ -27,6 +27,10 @@ class AccountSettingsViewModel : ViewModel() {
     private val _navigationEvent = MutableStateFlow<LogoutEvent?>(null)
     val navigationEvent: StateFlow<LogoutEvent?> = _navigationEvent.asStateFlow()
 
+    private val _usernameUpdateSuccess = MutableStateFlow(false)
+    val usernameUpdateSuccess: StateFlow<Boolean> = _usernameUpdateSuccess.asStateFlow()
+
+
     init {
         loadUserData()
     }
@@ -67,8 +71,10 @@ class AccountSettingsViewModel : ViewModel() {
     fun updateUsername(newUsername: String) {
         _settingsState.value = _settingsState.value.copy(
             username = newUsername,
-            isUsernameChanged = newUsername != _settingsState.value.originalUsername
+            isUsernameChanged = newUsername.trim() != _settingsState.value.originalUsername.trim(),
+            showUsernameSuccess = false
         )
+        _usernameUpdateSuccess.value = false
     }
 
     fun saveUsername() {
@@ -76,23 +82,40 @@ class AccountSettingsViewModel : ViewModel() {
             _isLoading.value = true
             try {
                 val userId = auth.currentUser?.uid ?: return@launch
-                val newUsername = _settingsState.value.username
+                val newUsername = _settingsState.value.username.trim()
 
+                // Update in Firestore
                 db.collection("users").document(userId)
                     .update("username", newUsername)
                     .await()
 
                 _settingsState.value = _settingsState.value.copy(
-                    isUsernameChanged = true,
-                    originalUsername = newUsername
+                    isUsernameChanged = false,
+                    originalUsername = newUsername,
+                    username = newUsername,
+                    showUsernameSuccess = true
                 )
+
+                _usernameUpdateSuccess.value = true
+
+                Log.d("AccountSettings", "Username updated successfully to: $newUsername")
 
             } catch (e: Exception) {
                 e.printStackTrace()
+                _settingsState.value = _settingsState.value.copy(
+                    showUsernameSuccess = false
+                )
             } finally {
                 _isLoading.value = false
             }
         }
+    }
+
+    fun clearUsernameSuccess() {
+        _usernameUpdateSuccess.value = false
+        _settingsState.value = _settingsState.value.copy(
+            showUsernameSuccess = false
+        )
     }
 
     fun updateCurrentPassword(password: String) {
@@ -230,5 +253,6 @@ data class AccountSettingsState(
     val confirmPassword: String = "",
     val passwordError: String? = null,
     val isUsernameChanged: Boolean = false,
-    val isPasswordChanged: Boolean = false
+    val isPasswordChanged: Boolean = false,
+    val showUsernameSuccess: Boolean = false
 )

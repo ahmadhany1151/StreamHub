@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -63,6 +64,7 @@ fun MovieDetailsScreen(
     val scope = rememberCoroutineScope()
     val db = remember { AppDatabase.getDatabase(context) }
 
+
     val title = when (movie) {
         is Movie -> movie.title ?: "Unknown Title"
         is MovieEntity -> movie.title
@@ -99,6 +101,8 @@ fun MovieDetailsScreen(
         try {
             val repo = MovieRepository()
             movieDetails = repo.getMovieDetails(id)
+            val detailsWithAge = repo.getMovieDetailsWithAge(id)
+            movieDetails = detailsWithAge
             val credits = repo.getMovieCredits(id)
             castList = credits.cast
             crewList = credits.crew
@@ -167,33 +171,37 @@ fun MovieDetailsScreen(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 // Overview and rating
+                var expanded by remember { mutableStateOf(false) }
+                val overviewText = overviewProp ?: movieDetails?.overview ?: "No overview available."
+                val previewLimit = 150 // number of characters before showing "Read more"
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = overviewProp ?: movieDetails?.overview ?: "No overview available.",
+                        text = if (!expanded && overviewText.length > previewLimit)
+                            overviewText.take(previewLimit) + "..."
+                        else
+                            overviewText,
                         color = Color.White,
                         fontSize = 14.sp,
                         lineHeight = 18.sp
                     )
 
+                    // Show read more / read less only if text is longer than limit
+                    if (overviewText.length > previewLimit) {
+                        Text(
+                            text = if (expanded) "Read less" else "Read more",
+                            color = Color(0xFFFFD54F),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .clickable { expanded = !expanded }
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.star_icon),
-                            contentDescription = "Rating Icon",
-                            modifier = Modifier
-                                .size(18.dp)
-                                .padding(end = 6.dp)
-                        )
-                        val displayRating = (movieDetails?.voteAverage ?: voteAverageProp)
-                        displayRating?.let { r ->
-                            Text(
-                                text = String.format("%.1f/10", r),
-                                color = Color(0xFFFFD54F),
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
+
                 }
             }
 
@@ -354,6 +362,8 @@ fun MovieDetailsScreen(
                         Divider(thickness = .3.dp, color = Color.Gray)
 
 // Crew summary
+                        val ageRating = movieDetails?.ageRating ?: "NR"
+
                         val directors = crewList.filter { it.job.equals("Director", true) }
                         val writers = crewList.filter { jobIsWriter(it.job) }.take(1)
 
@@ -412,6 +422,80 @@ fun MovieDetailsScreen(
 
                             // bottom divider full width
                             Divider(thickness = .3.dp, color = Color.Gray)
+                        }
+                        // Bottom row: Age Rating • Rate this • Rating box
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // 🔹 Column 1 — Age Rating
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                                Icon(
+
+                                        Icons.Default.Shield,
+                                        contentDescription = "Back",
+                                        tint = Color(0xFF00D17B),
+                                        modifier = Modifier.size(26.dp)
+                                )
+                                Text(
+                                    text = "Age",
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = ageRating ?: "NR",
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            // 🔹 Column 2 — Rate This Button
+                            Button(
+                                onClick = { /* TODO: Handle rating */ },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFCEFC00)
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
+                            ) {
+                                Text(text = "Rate This", color = Color(0xFF080808))
+                            }
+
+                            // 🔹 Column 3 — Rating + Votes
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                                // ⭐ Star icon
+                                Image(
+                                    painter = painterResource(id = R.drawable.star_icon),
+                                    contentDescription = "Rating Icon",
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .padding(bottom = 4.dp)
+                                )
+
+                                // ⭐ Rating text
+                                val displayRating = movieDetails?.voteAverage ?: voteAverageProp
+                                displayRating?.let { r ->
+                                    Text(
+                                        text = String.format("%.1f/10", r),
+                                        color = Color(0xFFFFD54F),
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+
+                                // ⭐ Votes
+                                Text(
+                                    text = "${String.format("%,d", movieDetails?.voteCount ?: 0)} votes",
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
+                            }
                         }
 
                     }

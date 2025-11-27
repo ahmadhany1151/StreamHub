@@ -4,6 +4,7 @@ import com.example.movieapp.model.MovieResponse
 import com.example.movieapp.model.CelebrityResponse
 import com.example.movieapplication.model.CreditsResponse
 import com.example.movieapplication.model.MovieDetails
+import com.example.movieapplication.model.ReleaseDatesResponse
 import com.example.movieapplication.model.VideoResponse
 import com.google.gson.annotations.SerializedName
 import retrofit2.http.GET
@@ -97,4 +98,9 @@ interface ApiService {
         @Query("append_to_response") appendToResponse: String = "videos" // <-- add this
     ): MovieDetails
 
+    @GET("movie/{movie_id}/release_dates")
+    suspend fun getMovieAgeRating(
+        @Path("movie_id") movieId: Int,
+        @Query("api_key") apiKey: String
+    ): ReleaseDatesResponse
 }

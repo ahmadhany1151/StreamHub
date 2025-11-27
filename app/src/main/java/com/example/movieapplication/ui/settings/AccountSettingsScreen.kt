@@ -20,11 +20,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun AccountSettingsScreen(
     viewModel: AccountSettingsViewModel = viewModel(),
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onBackClick: () -> Unit = {}
 ) {
     val settingsState by viewModel.settingsState.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val navigationEvent by viewModel.navigationEvent.collectAsState()
+    val usernameUpdateSuccess by viewModel.usernameUpdateSuccess.collectAsState()
 
     LaunchedEffect(navigationEvent) {
         when (navigationEvent) {
@@ -40,6 +42,11 @@ fun AccountSettingsScreen(
             null -> {}
         }
     }
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.clearUsernameSuccess()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -48,6 +55,15 @@ fun AccountSettingsScreen(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color.Black
                 ),
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+                }
             )
         },
         containerColor = Color.Black
@@ -97,7 +113,7 @@ fun AccountSettingsScreen(
                         cursorColor = Color.White
                     )
                 )
-                if (settingsState.isUsernameChanged) {
+                if (usernameUpdateSuccess || settingsState.showUsernameSuccess) {
                     Text(
                         text = "Username updated successfully!",
                         style = MaterialTheme.typography.bodySmall,
