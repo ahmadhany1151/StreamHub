@@ -26,12 +26,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RenderEffect
 import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -475,50 +478,38 @@ fun MovieDetailsScreen(
 
                             if (showRatingDialog) {
                                 Dialog(onDismissRequest = { showRatingDialog = false }) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(Color.Black.copy(alpha = 0.7f)) // blurred look simulation
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                    Box(modifier = Modifier.fillMaxSize()) {
+                                        // 1️⃣ Full-screen blurred background
+                                        Image(
+                                            painter = rememberAsyncImagePainter("https://image.tmdb.org/t/p/w500${movieDetails?.posterPath}"),
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
                                             modifier = Modifier
                                                 .fillMaxSize()
-                                                .padding(vertical = 40.dp)
+                                                .blur(10.dp)
+                                        )
+
+                                        // Semi-transparent overlay on top of blur
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color(0xFF2D2D2D).copy(alpha = 0.4f))
+                                        )
+
+                                        // Foreground UI (poster, stars, X button) remains sharp
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier.fillMaxSize()
                                         ) {
-                                            // X button
+                                            // X Button
                                             Box(
                                                 modifier = Modifier
-                                                    .align(Alignment.End)
-                                                    .padding(end = 16.dp)
                                                     .size(44.dp)
-                                                    .clip(CircleShape)
-                                                    .background(Color.Black.copy(alpha = 0.3f))
-                                                    .border(
-                                                        width = 1.dp,
-                                                        brush = Brush.linearGradient(
-                                                            colors = listOf(
-                                                                Color.White.copy(alpha = 0.3f),
-                                                                Color.White.copy(alpha = 0.1f)
-                                                            )
-                                                        ),
-                                                        shape = CircleShape
-                                                    )
-                                                    .drawBehind {
-                                                        // Liquid glass effect - gradient overlay
-                                                        drawCircle(
-                                                            brush = Brush.linearGradient(
-                                                                colors = listOf(
-                                                                    Color.White.copy(alpha = 0.15f),
-                                                                    Color.White.copy(alpha = 0.05f)
-                                                                )
-                                                            ),
-                                                            radius = size.minDimension / 2
-                                                        )
-                                                    }
-                                                    .clickable { showRatingDialog = false }, // clickable at the end
+                                                    .align(Alignment.End)
+                                                    .background(Color.Black.copy(alpha = 0.3f), CircleShape)
+                                                    .clickable { showRatingDialog = false },
                                                 contentAlignment = Alignment.Center
-                                            )  {
+                                            ) {
                                                 Icon(
                                                     imageVector = Icons.Default.Close,
                                                     contentDescription = "Close",
@@ -544,13 +535,15 @@ fun MovieDetailsScreen(
 
                                             // Stars Row
                                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                (1..10).forEach { index ->
+                                                (1..5).forEach { index ->
                                                     Icon(
                                                         imageVector = Icons.Default.Star,               // <-- Material icon
                                                         contentDescription = "Star $index",
-                                                        tint = if (index <= userRating) Color(0xFF00D17B) else Color.Gray,
+                                                        tint = if (index <= userRating) Color(
+                                                            0xFFFFEB3B
+                                                        ) else Color.Gray,
                                                         modifier = Modifier
-                                                            .size(24.dp)                                // adjust size here
+                                                            .size(28.dp)                                // adjust size here
                                                             .clickable { userRating = index }
                                                     )
                                                 }
@@ -560,7 +553,7 @@ fun MovieDetailsScreen(
 
                                             // Optional: display rating text
                                             Text(
-                                                text = "Your Rating: $userRating/10",
+                                                text = "Your Rating: $userRating/5",
                                                 color = Color.White,
                                                 fontSize = 16.sp,
                                                 fontWeight = FontWeight.Bold

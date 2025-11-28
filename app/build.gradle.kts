@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.movieapp"
-        minSdk = 24
+        minSdk = 31
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -117,4 +117,11 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     testImplementation(kotlin("test"))
     testImplementation("app.cash.turbine:turbine:1.1.0")
+
+    implementation("androidx.compose.ui:ui:1.5.0")
+// core Compose UI
+    implementation("androidx.compose.ui:ui-graphics:1.5.0")
+// for graphics & RenderEffect conversion
+    implementation("androidx.compose.ui:ui-tooling:1.5.0")
+// optional, for preview/debugging
 }
