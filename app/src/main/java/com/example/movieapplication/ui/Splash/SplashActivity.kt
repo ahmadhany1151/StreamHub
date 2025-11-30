@@ -1,20 +1,27 @@
 package com.example.movieapplication.ui.Splash
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.material3.Scaffold
@@ -30,6 +37,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.example.movieapp.MainActivity
 import com.example.movieapplication.ui.Login.LoginActivity
 import com.example.movieapplication.ui.Splash.ui.theme.MovieApplicationTheme
@@ -38,6 +48,45 @@ import kotlinx.coroutines.delay
 
 class SplashActivity : ComponentActivity() {
 
+    private val CHANNEL_ID = "welcome_channel"
+
+    // --- Permission launcher for Android 13+
+    private val requestNotificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                // Post notification slightly delayed after permission is granted
+                Handler(Looper.getMainLooper()).postDelayed({
+                    safeShowNotification()
+                }, 500)
+            }
+        }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        // Create notification channel (important for Android 8+)
+        createNotificationChannel()
+
+        // Check notification permission and show welcome notification safely
+        checkAndShowNotification()
+
+        setContent {
+            MovieApplicationTheme {
+                @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    contentWindowInsets = WindowInsets(0)
+                ) {
+                    IntroScreen(
+                        onGetInClick = { checkUserStatus() }
+                    )
+                }
+            }
+        }
+    }
+
+    // --- Check Firebase user and navigate
     private fun checkUserStatus() {
         val auth = FirebaseAuth.getInstance()
         val user = auth.currentUser
@@ -57,30 +106,83 @@ class SplashActivity : ComponentActivity() {
             finish()
         }
     }
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            MovieApplicationTheme {
-                @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    contentWindowInsets = WindowInsets(0)
-                ) {
-                    IntroScreen(
-                        onGetInClick = {
 
-                            checkUserStatus()
-                        }
-                    )
-                }
+    // --- Create notification channel
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Welcome Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifications that welcome the user"
             }
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    // --- Safely show notification with user name if available
+    private fun safeShowNotification() {
+        try {
+            val auth = FirebaseAuth.getInstance()
+            val user = auth.currentUser
+            val userName = user?.displayName
+
+            val title = if (!userName.isNullOrEmpty()) {
+                "Welcome back, $userName!"
+            } else {
+                "Welcome to StreamHub!"
+            }
+
+            val message = if (!userName.isNullOrEmpty()) {
+                "Glad to see you again. Enjoy your experience!"
+            } else {
+                "Glad to have you here. Let's get you started!"
+            }
+
+            // Slight delay ensures notification shows when app is foreground
+            Handler(Looper.getMainLooper()).postDelayed({
+                val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setContentTitle(title)
+                    .setContentText(message)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setDefaults(NotificationCompat.DEFAULT_ALL) // sound + vibration
+                    .setAutoCancel(true)
+                    .build()
+
+                NotificationManagerCompat.from(this).notify(1001, notification)
+            }, 500)
+
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+        }
+    }
+
+    // --- Check Android 13+ permission and post notification safely
+    private fun checkAndShowNotification() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                safeShowNotification()
+            } else {
+                requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        } else {
+            // Android < 13
+            safeShowNotification()
         }
     }
 }
 
+// ---------------- Compose UI ----------------
+
 @Composable
-fun IntroScreen(onGetInClick: () -> Unit, testMode: Boolean = true, modifier: Modifier = Modifier) {
+fun IntroScreen(onGetInClick: () -> Unit, testMode: Boolean = false, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -100,17 +202,12 @@ fun IntroScreen(onGetInClick: () -> Unit, testMode: Boolean = true, modifier: Mo
 
 @Composable
 fun HeaderSection(onGetInClick: () -> Unit, testMode: Boolean = false) {
-    var visible by remember { mutableStateOf(testMode) }
+    var visible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        if (!testMode) {
-            delay(300)
-        }
+        if (!testMode) delay(300)
         visible = true
     }
-
-
-
 
     Box(
         modifier = Modifier
@@ -185,7 +282,6 @@ fun HeaderSection(onGetInClick: () -> Unit, testMode: Boolean = false) {
                             containerColor = Color(0xFF92B300),
                             contentColor = Color.Black
                         ),
-                        border = BorderStroke(1.dp, Color(0xFF92B300)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
@@ -207,3 +303,4 @@ fun HeaderSection(onGetInClick: () -> Unit, testMode: Boolean = false) {
 private fun IntroScreenPreview() {
     IntroScreen(onGetInClick = {})
 }
+
