@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -41,6 +42,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.example.movieapp.MainActivity
+import com.example.movieapp.R
 import com.example.movieapplication.ui.Login.LoginActivity
 import com.example.movieapplication.ui.Splash.ui.theme.MovieApplicationTheme
 import com.google.firebase.auth.FirebaseAuth
@@ -140,11 +142,12 @@ class SplashActivity : ComponentActivity() {
             } else {
                 "Glad to have you here. Let's get you started!"
             }
-
+            val bitmap = BitmapFactory.decodeResource(resources, R.drawable.stream3)
             // Slight delay ensures notification shows when app is foreground
             Handler(Looper.getMainLooper()).postDelayed({
                 val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setSmallIcon(android.R.drawable.ic_menu_send)
+                    .setLargeIcon(bitmap)
                     .setContentTitle(title)
                     .setContentText(message)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
