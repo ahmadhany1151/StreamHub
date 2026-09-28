@@ -63,6 +63,7 @@
                 <map>
                   <entry key="Duration" value="90" />
                   <entry key="OPPO CPH2603" value="120" />
+                  <entry key="Pixel_2_XL" value="120" />
                   <entry key="Tests" value="360" />
                 </map>
               </option>
@@ -116,6 +117,7 @@
                 <map>
                   <entry key="Duration" value="90" />
                   <entry key="OPPO CPH2603" value="120" />
+                  <entry key="Pixel_2_XL" value="120" />
                   <entry key="Tests" value="360" />
                 </map>
               </option>
@@ -142,6 +144,7 @@
                 <map>
                   <entry key="Duration" value="90" />
                   <entry key="OPPO CPH2603" value="120" />
+                  <entry key="Pixel_2_XL" value="120" />
                   <entry key="Pixel_5" value="120" />
                   <entry key="Tests" value="360" />
                 </map>

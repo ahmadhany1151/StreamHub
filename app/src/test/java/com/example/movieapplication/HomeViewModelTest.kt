@@ -84,7 +84,7 @@ class HomeViewModelTest {
 
         viewModel.snackbarMessage.test {
             assertEquals("✅ Added to Watchlist: Fight Club", awaitItem())
-            cancelAndIgnoreRemainingEvents() // No auto-null → don't wait for it
+            cancelAndIgnoreRemainingEvents()
         }
     }
 

@@ -223,7 +223,7 @@ fun MovieDetailsScreen(
             // -------------------------------
             // GENRES ROW
             // -------------------------------
-            val genres = movieDetails?.genres?.take(3) ?: listOf(
+            val genres = movieDetails?.genres?: listOf(
                 Genre(0, "Action"),
                 Genre(1, "Drama"),
                 Genre(2, "Comedy")

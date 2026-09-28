@@ -118,7 +118,7 @@ fun WatchlistScreen(
                                 )
                                 movie.voteAverage?.let {
                                     Text(
-                                        text = "⭐ $it/10",
+                                        text = "⭐ ${String.format("%.1f", it)}/10",
                                         color = Color.Yellow,
                                         fontSize = 14.sp
                                     )

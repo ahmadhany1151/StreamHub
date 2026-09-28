@@ -42,7 +42,7 @@ class MovieRepositoryTest {
                 id = 550,
                 title = "Fight Club",
                 posterPath = "/path.jpg",
-                overview = "",           // you can leave empty or null if nullable
+                overview = "",
                 voteAverage = 8.8,
                 backdropPath = null,
                 releaseDate = "1999-10-15",
@@ -129,9 +129,10 @@ class MovieRepositoryTest {
             releaseDate = "1999-10-15",
             genres = emptyList(),
             runtime = 139,
-            // add other required fields if needed
             cast = emptyList(),
-            crew = emptyList()
+            crew = emptyList(),
+            voteCount = 12345,
+            ageRating = "R"
         )
 
         coEvery { apiService.getMovieDetails(movieId, any(), "videos") } returns fakeDetails
